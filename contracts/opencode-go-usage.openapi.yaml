@@ -1,0 +1,135 @@
+openapi: 3.0.3
+info:
+  title: OpenCode Go usage
+  version: 0.1.0
+  description: |
+    Contract for the OpenCode Go usage endpoint consumed by opencode-go-waybar.
+    The contract describes the wire shape returned by opencode.ai and is used by
+    Specmatic to validate the .NET usage client.
+servers:
+  - url: https://opencode.ai/zen/go
+paths:
+  /v1/usage:
+    get:
+      operationId: getUsage
+      summary: Get OpenCode Go usage windows.
+      description: |
+        Returns the rolling, weekly, and monthly OpenCode Go usage windows for the
+        authenticated account.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Complete usage data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsageResponse"
+              examples:
+                complete:
+                  $ref: "#/components/examples/UsageComplete"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/ServerError"
+        "502":
+          $ref: "#/components/responses/ServerError"
+        "503":
+          $ref: "#/components/responses/ServerError"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: OpenCode Go API key, prefixed `sk-`.
+  schemas:
+    UsageResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - usage
+      properties:
+        usage:
+          $ref: "#/components/schemas/Usage"
+    Usage:
+      type: object
+      additionalProperties: false
+      required:
+        - rolling
+        - weekly
+        - monthly
+      properties:
+        rolling:
+          $ref: "#/components/schemas/UsageWindow"
+        weekly:
+          $ref: "#/components/schemas/UsageWindow"
+        monthly:
+          $ref: "#/components/schemas/UsageWindow"
+    UsageWindow:
+      type: object
+      additionalProperties: false
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum: [ok, no_api_key, network_error, bad_response, "HTTP 401", "HTTP 403", "HTTP 429"]
+        percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+        resetsAt:
+          type: string
+          format: date-time
+        limitDollars:
+          type: number
+          minimum: 0
+    Problem:
+      type: object
+      additionalProperties: true
+  responses:
+    Unauthorized:
+      description: Bearer token is missing or invalid.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    Forbidden:
+      description: Bearer token is not authorized for the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    RateLimited:
+      description: Too many requests. The client must back off.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+    ServerError:
+      description: Upstream OpenCode Go server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Problem"
+  examples:
+    UsageComplete:
+      summary: Successful usage response.
+      value:
+        usage:
+          rolling:
+            status: ok
+            percent: 61
+            resetsAt: "2026-08-15T19:29:58.437Z"
+          weekly:
+            status: ok
+            percent: 24
+            resetsAt: "2026-08-17T00:00:00.437Z"
+          monthly:
+            status: ok
+            percent: 12
+            resetsAt: "2026-09-15T14:23:09.437Z"
