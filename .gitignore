@@ -407,19 +407,36 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 
-# VS Code files for those working on multiple tools
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# VS Code
+.vscode/
 
 # Local History for Visual Studio Code
 .history/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+# JetBrains IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+.fleet/
+
+# Project-local planning
+Plan.md
+Roadmap.md
+
+# Linux desktop and editor metadata
+.directory
+.Trash-*
+.nfs*
+.fuse_hidden*
+*.swp
+*.swo
+
+# Other local desktop metadata
+.DS_Store
 
 # Windows Installer files from build outputs
 *.cab
