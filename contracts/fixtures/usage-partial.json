@@ -1,0 +1,21 @@
+{
+  "usage": {
+    "rolling": {
+      "status": "no_api_key",
+      "percent": null,
+      "resetsAt": null
+    },
+    "weekly": {
+      "status": "ok",
+      "percent": 24,
+      "resetsAt": "2026-08-17T00:00:00.000Z",
+      "limitDollars": 30
+    },
+    "monthly": {
+      "status": "ok",
+      "percent": 12,
+      "resetsAt": "2026-09-15T14:23:09.000Z",
+      "limitDollars": 60
+    }
+  }
+}
