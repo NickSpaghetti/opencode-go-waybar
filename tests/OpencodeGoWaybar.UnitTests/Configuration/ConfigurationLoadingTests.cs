@@ -1,10 +1,11 @@
-using System.Text.Json;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Configuration.UserSecrets;
 using OpencodeGoWaybar.Configuration;
 using Xunit;
 
 namespace OpencodeGoWaybar.UnitTests.Configuration;
 
+[Collection("Configuration")]
 public class ConfigurationLoadingTests
 {
     [Fact]
@@ -61,6 +62,18 @@ public class ConfigurationLoadingTests
     }
 
     [Fact]
+    public void AssemblyDeclaresUserSecretsId()
+    {
+        var attribute = typeof(OpenCodeGoOptions).Assembly
+            .GetCustomAttributes(typeof(UserSecretsIdAttribute), inherit: false)
+            .Cast<UserSecretsIdAttribute>()
+            .SingleOrDefault();
+
+        Assert.NotNull(attribute);
+        Assert.Equal("opencode-go-waybar-development", attribute!.UserSecretsId);
+    }
+
+    [Fact]
     public void JsonFileWithUnknownKeysLeavesKnownKeysAtDefault()
     {
         var path = WriteTempConfig("""
@@ -86,11 +99,14 @@ public class ConfigurationLoadingTests
 
 internal sealed class EnvironmentVariableScope : IDisposable
 {
-    private readonly (string Name, string? Value)[] _variables;
+    private readonly (string Name, string? PreviousValue)[] _variables;
 
     public EnvironmentVariableScope(params (string Name, string? Value)[] variables)
     {
-        _variables = variables;
+        _variables = variables
+            .Select(variable => (variable.Name, Environment.GetEnvironmentVariable(variable.Name)))
+            .ToArray();
+
         foreach (var (name, value) in variables)
         {
             Environment.SetEnvironmentVariable(name, value);
@@ -99,9 +115,9 @@ internal sealed class EnvironmentVariableScope : IDisposable
 
     public void Dispose()
     {
-        foreach (var (name, _) in _variables)
+        foreach (var (name, previousValue) in _variables)
         {
-            Environment.SetEnvironmentVariable(name, null);
+            Environment.SetEnvironmentVariable(name, previousValue);
         }
     }
 }

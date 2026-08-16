@@ -7,8 +7,7 @@ namespace OpencodeGoWaybar.Configuration;
 
 /// <summary>
 /// Builds <see cref="OpenCodeGoOptions"/> from defaults, an optional JSON
-/// configuration file, environment variables, and (in development) the .NET
-/// user secrets store.
+/// configuration file, user secrets in development, and environment variables.
 ///
 /// <para>
 /// This factory is the configuration composition step for the one-shot
@@ -25,13 +24,13 @@ internal static class OpenCodeGoConfiguration
 
     /// <summary>
     /// Loads options from the listed sources in this order: defaults, the
-    /// optional JSON file, environment variables, and (in development builds)
-    /// user secrets. Later sources override earlier ones. Validation runs
+/// optional JSON file, user secrets in development, and environment variables.
+/// Later sources override earlier ones. Validation runs
     /// before the result is returned, so a misconfigured deployment fails fast.
     /// </summary>
     /// <param name="configPath">
-    /// Optional path to a JSON configuration file. Missing or unreadable files
-    /// are ignored; invalid JSON fails fast so the operator notices.
+    /// Optional path to a JSON configuration file. Missing files are ignored;
+    /// invalid or unreadable files fail fast so the operator notices.
     /// </param>
     public static IOptions<OpenCodeGoOptions> Build(string? configPath = null)
     {
@@ -42,20 +41,28 @@ internal static class OpenCodeGoConfiguration
             builder.AddJsonFile(configPath, optional: true);
         }
 
-        builder.AddEnvironmentVariables(prefix: EnvironmentVariablePrefix);
-
         if (IsDevelopmentBuild())
         {
             builder.AddUserSecrets<OpenCodeGoOptions>(optional: true);
         }
 
-        var configuration = builder.Build();
-        var services = new ServiceCollection()
-            .AddOptions<OpenCodeGoOptions>()
-            .Bind(configuration)
-            .ValidateOnStart<OpenCodeGoOptions>();
+        builder.AddEnvironmentVariables(prefix: EnvironmentVariablePrefix);
 
-        return services.Services.BuildServiceProvider().GetRequiredService<IOptions<OpenCodeGoOptions>>();
+        var configuration = builder.Build();
+        try
+        {
+            var services = new ServiceCollection();
+            services.AddOptions<OpenCodeGoOptions>().Bind(configuration);
+            services.AddSingleton<IValidateOptions<OpenCodeGoOptions>, OpenCodeGoOptionsValidator>();
+
+            using var provider = services.BuildServiceProvider();
+            var options = provider.GetRequiredService<IOptions<OpenCodeGoOptions>>().Value;
+            return Options.Create(options);
+        }
+        finally
+        {
+            (configuration as IDisposable)?.Dispose();
+        }
     }
 
     private static bool IsDevelopmentBuild() =>

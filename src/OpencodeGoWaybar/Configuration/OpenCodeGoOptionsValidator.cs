@@ -23,7 +23,9 @@ internal sealed class OpenCodeGoOptionsValidator : IValidateOptions<OpenCodeGoOp
             failures.Add("DatabasePath must not be empty.");
         }
 
-        if (options.UsageEndpoint.Scheme != Uri.UriSchemeHttps)
+        if (options.UsageEndpoint is null ||
+            !options.UsageEndpoint.IsAbsoluteUri ||
+            options.UsageEndpoint.Scheme != Uri.UriSchemeHttps)
         {
             failures.Add("UsageEndpoint must be an absolute https URI.");
         }
