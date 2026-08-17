@@ -57,8 +57,10 @@ public sealed class OpenCodeGoOptionsValidatorTests
             ("OPENCODE_GO_AuthPath", ""),
             ("OPENCODE_GO_DatabasePath", "/tmp/opencode.db"));
 
-        var foundation = new ConfigurationService(new ConfigurationBroker(), new OpenCodeGoOptionsValidator(), Substitute.For<ILoggingBroker>());
+        var loggingBroker = Substitute.For<ILoggingBroker>();
+        var foundation = new ConfigurationService(new ConfigurationBroker(), new OpenCodeGoOptionsValidator(), loggingBroker);
 
         Assert.Throws<ConfigurationServiceException>(() => foundation.RetrieveOptions());
+        loggingBroker.Received(1).LogError(Arg.Any<ConfigurationServiceException>());
     }
 }

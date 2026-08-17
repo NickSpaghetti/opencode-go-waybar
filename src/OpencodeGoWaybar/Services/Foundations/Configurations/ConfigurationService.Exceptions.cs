@@ -14,17 +14,18 @@ internal sealed partial class ConfigurationService
         catch (OptionsValidationException exception)
         {
             var validationException = new ConfigurationServiceException(exception);
-            this._loggingBroker.LogErrorAsync(validationException).GetAwaiter().GetResult();
+            _loggingBroker.LogError(validationException);
             throw validationException;
         }
-        catch (ConfigurationServiceException)
+        catch (ConfigurationServiceException exception)
         {
+            _loggingBroker.LogError(exception);
             throw;
         }
         catch (Exception exception)
         {
             var serviceException = new ConfigurationServiceException(exception);
-            this._loggingBroker.LogErrorAsync(serviceException).GetAwaiter().GetResult();
+            _loggingBroker.LogError(serviceException);
             throw serviceException;
         }
     }
