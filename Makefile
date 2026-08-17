@@ -11,13 +11,22 @@ SPECMATIC_IMAGE ?= specmatic/specmatic:latest@sha256:99d73771b5bd2caddf43ab66ae4
 SPECMATIC_PORT ?= 9000
 TEST_NETWORK ?= opencode-go-waybar-contract
 SPECMATIC_CONTRACT ?= contracts/opencode-go-usage.openapi.yaml
+NUGET_CACHE ?= $(HOME)/.cache/opencode-go-waybar/nuget
 
 # Run every container as the host user so bind-mounted build artifacts stay
 # owned by the user who runs Make. The dev image still installs SDK packages
 # as root during `docker build`; only the runtime invocations drop privileges.
 DOCKER_USER := $(shell id -u):$(shell id -g)
 
-DOCKER_RUN = $(DOCKER) run --rm --user $(DOCKER_USER) -v $(CURDIR):/workspace -w /workspace
+DOCKER_RUN = $(DOCKER) run --rm --user $(DOCKER_USER) \
+	-e NUGET_PACKAGES=/tmp/opencode-go-waybar/nuget \
+	-v $(CURDIR):/workspace \
+	-v $(NUGET_CACHE):/tmp/opencode-go-waybar/nuget \
+	-w /workspace
+
+.PHONY: prepare-cache
+prepare-cache:
+	mkdir -p "$(NUGET_CACHE)"
 
 .PHONY: help
 help: ## Show available targets
@@ -38,17 +47,19 @@ build: build-prod
 
 .PHONY: test
 test: ## Run the unit test suite inside the dev container
-test: build-dev
+test: build-dev prepare-cache
 	$(DOCKER_RUN) $(IMAGE) $(DOTNET) test tests/OpencodeGoWaybar.UnitTests/OpencodeGoWaybar.UnitTests.csproj --nologo
 
 .PHONY: shell
 shell: ## Open an interactive shell in the dev container
-shell: build-dev
-	$(DOCKER) run --rm --user $(DOCKER_USER) -it -v $(CURDIR):/workspace -w /workspace $(IMAGE) /bin/bash
+shell: build-dev prepare-cache
+	$(DOCKER) run --rm --user $(DOCKER_USER) -e NUGET_PACKAGES=/tmp/opencode-go-waybar/nuget -it \
+		-v $(CURDIR):/workspace -v $(NUGET_CACHE):/tmp/opencode-go-waybar/nuget \
+		-w /workspace $(IMAGE) /bin/bash
 
 .PHONY: dev
 dev: ## Run the source application in the dev container
-dev: build-dev
+dev: build-dev prepare-cache
 	$(DOCKER_RUN) -i $(IMAGE) $(DOTNET) run --project src/OpencodeGoWaybar/OpencodeGoWaybar.csproj
 
 .PHONY: contract
@@ -74,7 +85,7 @@ contract-stop:
 
 .PHONY: publish
 publish: ## Publish the NativeAOT binary into an output directory
-publish: build-dev
+publish: build-dev prepare-cache
 	$(DOCKER_RUN) $(IMAGE) $(DOTNET) publish src/OpencodeGoWaybar/OpencodeGoWaybar.csproj --configuration $(CONFIGURATION) --runtime $(RUNTIME) --output /workspace/out/$(RUNTIME)
 
 .PHONY: hooks
