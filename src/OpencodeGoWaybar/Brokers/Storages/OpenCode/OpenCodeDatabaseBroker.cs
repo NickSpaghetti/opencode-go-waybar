@@ -4,6 +4,14 @@ namespace OpencodeGoWaybar.Brokers.Storages.OpenCode;
 
 internal sealed class OpenCodeDatabaseBroker(string databasePath) : IOpenCodeDatabaseBroker
 {
+    public ValueTask<DateTimeOffset?> RetrieveLastWriteTimeAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(File.Exists(databasePath)
+            ? (DateTimeOffset?)File.GetLastWriteTimeUtc(databasePath)
+            : null);
+    }
+
     public async ValueTask<IReadOnlyList<OpenCodeMessage>> RetrieveMessagesAsync(
         DateTimeOffset cutoff,
         CancellationToken cancellationToken)

@@ -17,13 +17,16 @@ internal sealed partial class OpenCodeDatabaseService : IOpenCodeDatabaseService
         ILoggingBroker loggingBroker,
         IOptions<OpenCodeGoOptions> options)
     {
-        this._databaseBroker = databaseBroker;
-        this._loggingBroker = loggingBroker;
-        this._options = options;
+        _databaseBroker = databaseBroker;
+        _loggingBroker = loggingBroker;
+        _options = options;
     }
 
     public ValueTask<IReadOnlyList<OpenCodeMessage>> RetrieveMessagesAsync(
         DateTimeOffset cutoff,
         CancellationToken cancellationToken) =>
         TryCatchAsync(cutoff, cancellationToken);
+
+    public ValueTask<DateTimeOffset?> RetrieveLastWriteTimeAsync(CancellationToken cancellationToken) =>
+        TryCatchLastWriteTimeAsync(cancellationToken);
 }

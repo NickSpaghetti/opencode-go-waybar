@@ -40,6 +40,18 @@ internal sealed partial class OpenCodeDatabaseService
         }
     }
 
+    private async ValueTask<DateTimeOffset?> TryCatchLastWriteTimeAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await _databaseBroker.RetrieveLastWriteTimeAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            throw await LogAndReturnAsync(new OpenCodeDatabaseServiceException(exception));
+        }
+    }
+
     private async ValueTask<Exception> LogAndReturnAsync(Exception exception)
     {
         await _loggingBroker.LogErrorAsync(exception);

@@ -25,6 +25,11 @@ internal sealed class OpenCodeGoOptionsValidator : IValidateOptions<OpenCodeGoOp
             failures.Add("DatabasePath must not be empty.");
         }
 
+        if (string.IsNullOrWhiteSpace(options.CachePath))
+        {
+            failures.Add("CachePath must not be empty.");
+        }
+
         if (options.UsageEndpoint is null ||
             !options.UsageEndpoint.IsAbsoluteUri ||
             options.UsageEndpoint.Scheme != Uri.UriSchemeHttps)
