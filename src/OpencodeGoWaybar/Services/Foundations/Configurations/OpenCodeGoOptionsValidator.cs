@@ -1,6 +1,8 @@
 using Microsoft.Extensions.Options;
 
-namespace OpencodeGoWaybar.Configuration;
+using OpencodeGoWaybar.Models.Configurations;
+
+namespace OpencodeGoWaybar.Services.Foundations.Configurations;
 
 /// <summary>
 /// Validates <see cref="OpenCodeGoOptions"/> at startup. The configuration

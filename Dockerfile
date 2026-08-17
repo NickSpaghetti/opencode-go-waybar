@@ -8,14 +8,14 @@ WORKDIR /workspace
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1 \
-    NUGET_PACKAGES=/workspace/.nuget/packages
+    NUGET_PACKAGES=/tmp/opencode-go-waybar/nuget
 
 # Copy only the project files first for a cached restore.
 COPY global.json Directory.Build.props* Directory.Packages.props* NuGet.Config* ./
 COPY src/OpencodeGoWaybar/OpencodeGoWaybar.csproj src/OpencodeGoWaybar/OpencodeGoWaybar.csproj
 COPY tests/OpencodeGoWaybar.UnitTests/OpencodeGoWaybar.UnitTests.csproj tests/OpencodeGoWaybar.UnitTests/OpencodeGoWaybar.UnitTests.csproj
 
-RUN --mount=type=cache,target=/workspace/.nuget/packages,sharing=locked \
+RUN --mount=type=cache,target=/tmp/opencode-go-waybar/nuget,sharing=locked \
     dotnet restore src/OpencodeGoWaybar/OpencodeGoWaybar.csproj \
  && dotnet restore tests/OpencodeGoWaybar.UnitTests/OpencodeGoWaybar.UnitTests.csproj
 

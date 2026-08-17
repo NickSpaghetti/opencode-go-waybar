@@ -1,4 +1,4 @@
-namespace OpencodeGoWaybar.Configuration;
+namespace OpencodeGoWaybar.Models.Configurations;
 
 /// <summary>
 /// Typed options for the opencode-go-waybar Waybar module. Loaded from defaults,
@@ -15,6 +15,8 @@ public sealed class OpenCodeGoOptions
     public const string DefaultAuthPath = "~/.local/share/opencode/auth.json";
     public const string DefaultDatabasePath = "~/.local/share/opencode/opencode.db";
     public const string DefaultUsageEndpoint = "https://opencode.ai/zen/go/v1/usage";
+    public const string EnvironmentVariablePrefix = "OPENCODE_GO_";
+    public const string ApiKeyEnvironmentVariable = "OPENCODE_GO_API_KEY";
 
     public int RefreshIntervalSeconds
     {

@@ -1,6 +1,10 @@
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration.UserSecrets;
-using OpencodeGoWaybar.Configuration;
+using OpencodeGoWaybar.Brokers.Configurations;
+using OpencodeGoWaybar.Brokers.Support.Logging;
+using OpencodeGoWaybar.Models.Configurations;
+using OpencodeGoWaybar.Services.Foundations.Configurations;
+using NSubstitute;
 using Xunit;
 
 namespace OpencodeGoWaybar.UnitTests.Configuration;
@@ -8,10 +12,13 @@ namespace OpencodeGoWaybar.UnitTests.Configuration;
 [Collection("Configuration")]
 public class ConfigurationLoadingTests
 {
+    private static ConfigurationService CreateFoundation() =>
+        new(new ConfigurationBroker(), new OpenCodeGoOptionsValidator(), Substitute.For<ILoggingBroker>());
+
     [Fact]
     public void EmptyConfigurationReturnsDefaults()
     {
-        IOptions<OpenCodeGoOptions> options = OpenCodeGoConfiguration.Build(configPath: null);
+        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: null);
 
         Assert.Equal(300, options.Value.RefreshIntervalSeconds);
         Assert.Equal("~/.local/share/opencode/auth.json", options.Value.AuthPath);
@@ -27,7 +34,7 @@ public class ConfigurationLoadingTests
             }
             """);
 
-        IOptions<OpenCodeGoOptions> options = OpenCodeGoConfiguration.Build(configPath: path);
+        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
 
         Assert.Equal(600, options.Value.RefreshIntervalSeconds);
         Assert.Equal("/etc/opencode/auth.json", options.Value.AuthPath);
@@ -37,7 +44,7 @@ public class ConfigurationLoadingTests
     [Fact]
     public void MissingJsonFileFallsBackToDefaults()
     {
-        IOptions<OpenCodeGoOptions> options = OpenCodeGoConfiguration.Build(configPath: "/tmp/does-not-exist.json");
+        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: "/tmp/does-not-exist.json");
 
         Assert.Equal(300, options.Value.RefreshIntervalSeconds);
     }
@@ -55,7 +62,7 @@ public class ConfigurationLoadingTests
             ("OPENCODE_GO_RefreshIntervalSeconds", "1800"),
             ("OPENCODE_GO_AuthPath", "/env/auth.json"));
 
-        IOptions<OpenCodeGoOptions> options = OpenCodeGoConfiguration.Build(configPath: path);
+        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
 
         Assert.Equal(1800, options.Value.RefreshIntervalSeconds);
         Assert.Equal("/env/auth.json", options.Value.AuthPath);
@@ -74,6 +81,17 @@ public class ConfigurationLoadingTests
     }
 
     [Fact]
+    public void ReadsApiKeyFromTheDedicatedEnvironmentVariable()
+    {
+        using var scope = new EnvironmentVariableScope(
+            (OpenCodeGoOptions.ApiKeyEnvironmentVariable, "test-api-key"));
+
+        var secrets = CreateFoundation().RetrieveSecrets().Value;
+
+        Assert.Equal("test-api-key", secrets.ApiKey);
+    }
+
+    [Fact]
     public void JsonFileWithUnknownKeysLeavesKnownKeysAtDefault()
     {
         var path = WriteTempConfig("""
@@ -83,7 +101,7 @@ public class ConfigurationLoadingTests
             }
             """);
 
-        IOptions<OpenCodeGoOptions> options = OpenCodeGoConfiguration.Build(configPath: path);
+        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
 
         Assert.Equal(120, options.Value.RefreshIntervalSeconds);
         Assert.Equal("~/.local/share/opencode/auth.json", options.Value.AuthPath);

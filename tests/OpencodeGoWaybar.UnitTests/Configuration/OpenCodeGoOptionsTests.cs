@@ -1,4 +1,4 @@
-using OpencodeGoWaybar.Configuration;
+using OpencodeGoWaybar.Models.Configurations;
 using Xunit;
 
 namespace OpencodeGoWaybar.UnitTests.Configuration;

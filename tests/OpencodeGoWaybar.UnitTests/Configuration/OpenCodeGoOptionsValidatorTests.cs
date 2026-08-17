@@ -1,5 +1,10 @@
 using Microsoft.Extensions.Options;
-using OpencodeGoWaybar.Configuration;
+using OpencodeGoWaybar.Brokers.Configurations;
+using OpencodeGoWaybar.Brokers.Support.Logging;
+using OpencodeGoWaybar.Models.Configurations;
+using OpencodeGoWaybar.Services.Foundations.Configurations;
+using OpencodeGoWaybar.Services.Foundations.Configurations.Exceptions;
+using NSubstitute;
 using Xunit;
 
 namespace OpencodeGoWaybar.UnitTests.Configuration;
@@ -52,6 +57,8 @@ public sealed class OpenCodeGoOptionsValidatorTests
             ("OPENCODE_GO_AuthPath", ""),
             ("OPENCODE_GO_DatabasePath", "/tmp/opencode.db"));
 
-        Assert.Throws<OptionsValidationException>(() => OpenCodeGoConfiguration.Build());
+        var foundation = new ConfigurationService(new ConfigurationBroker(), new OpenCodeGoOptionsValidator(), Substitute.For<ILoggingBroker>());
+
+        Assert.Throws<ConfigurationServiceException>(() => foundation.RetrieveOptions());
     }
 }
