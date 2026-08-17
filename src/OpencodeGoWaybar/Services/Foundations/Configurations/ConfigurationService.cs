@@ -17,9 +17,9 @@ internal sealed partial class ConfigurationService : IConfigurationService
         IValidateOptions<OpenCodeGoOptions> validator,
         ILoggingBroker loggingBroker)
     {
-        this._configurationBroker = configurationBroker;
-        this._validator = validator;
-        this._loggingBroker = loggingBroker;
+        _configurationBroker = configurationBroker;
+        _validator = validator;
+        _loggingBroker = loggingBroker;
     }
     public IOptions<OpenCodeGoOptions> RetrieveOptions(string? configPath = null)
     {

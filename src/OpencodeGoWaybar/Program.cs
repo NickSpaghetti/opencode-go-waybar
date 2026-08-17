@@ -4,11 +4,14 @@ using Microsoft.Extensions.Options;
 using OpencodeGoWaybar.Brokers.Apis.Usage;
 using OpencodeGoWaybar.Brokers.Configurations;
 using OpencodeGoWaybar.Brokers.Storages.OpenCode;
+using OpencodeGoWaybar.Brokers.Storages.Cache;
 using OpencodeGoWaybar.Brokers.Support.Logging;
 using OpencodeGoWaybar.Models.Configurations;
 using OpencodeGoWaybar.Services.Foundations.Configurations;
+using OpencodeGoWaybar.Services.Foundations.Cache;
 using OpencodeGoWaybar.Services.Foundations.OpenCodeDatabase;
 using OpencodeGoWaybar.Services.Foundations.Usage;
+using OpencodeGoWaybar.Services.Processings.Usage;
 
 namespace OpencodeGoWaybar;
 
@@ -34,8 +37,13 @@ internal static class Program
             .AddTransient<IOpenCodeDatabaseBroker>(services =>
                 new OpenCodeDatabaseBroker(
                     services.GetRequiredService<IOptions<OpenCodeGoOptions>>().Value.DatabasePath))
+            .AddTransient<ICacheBroker>(services =>
+                new CacheBroker(
+                    services.GetRequiredService<IOptions<OpenCodeGoOptions>>().Value.CachePath))
+            .AddTransient<ICacheService, CacheService>()
             .AddTransient<IUsageService, UsageService>()
             .AddTransient<IOpenCodeDatabaseService, OpenCodeDatabaseService>()
+            .AddTransient<IUsageProcessingService, UsageProcessingService>()
             .BuildServiceProvider();
 
         Console.WriteLine("opencode-go-waybar 0.0.0");

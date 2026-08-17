@@ -153,6 +153,9 @@ public sealed class FoundationServiceTests
 
     private sealed class StubDatabaseBroker(Func<DateTimeOffset, CancellationToken, ValueTask<IReadOnlyList<OpenCodeMessage>>> call) : IOpenCodeDatabaseBroker
     {
+        public ValueTask<DateTimeOffset?> RetrieveLastWriteTimeAsync(CancellationToken cancellationToken) =>
+            ValueTask.FromResult<DateTimeOffset?>(DateTimeOffset.UnixEpoch);
+
         public ValueTask<IReadOnlyList<OpenCodeMessage>> RetrieveMessagesAsync(DateTimeOffset cutoff, CancellationToken cancellationToken) =>
             call(cutoff, cancellationToken);
     }

@@ -14,6 +14,7 @@ public sealed class OpenCodeGoOptions
     public const int MinPromptDebounceSeconds = 0;
     public const string DefaultAuthPath = "~/.local/share/opencode/auth.json";
     public const string DefaultDatabasePath = "~/.local/share/opencode/opencode.db";
+    public const string DefaultCachePath = "~/.cache/opencode-go-waybar/state.json";
     public const string DefaultUsageEndpoint = "https://opencode.ai/zen/go/v1/usage";
     public const string EnvironmentVariablePrefix = "OPENCODE_GO_";
     public const string ApiKeyEnvironmentVariable = "OPENCODE_GO_API_KEY";
@@ -35,6 +36,8 @@ public sealed class OpenCodeGoOptions
     public string AuthPath { get; set; } = DefaultAuthPath;
 
     public string DatabasePath { get; set; } = DefaultDatabasePath;
+
+    public string CachePath { get; set; } = DefaultCachePath;
 
     public Uri UsageEndpoint { get; set; } = new(DefaultUsageEndpoint);
     

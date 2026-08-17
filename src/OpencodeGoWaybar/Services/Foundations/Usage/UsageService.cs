@@ -16,9 +16,9 @@ internal sealed partial class UsageService : IUsageService
         ILoggingBroker loggingBroker,
         IOptions<OpenCodeGoSecrets> secrets)
     {
-        this._usageBroker = usageBroker;
-        this._loggingBroker = loggingBroker;
-        this._secrets = secrets;
+        _usageBroker = usageBroker;
+        _loggingBroker = loggingBroker;
+        _secrets = secrets;
     }
 
     public ValueTask<UsageResponse> RetrieveUsageAsync(CancellationToken cancellationToken) =>
