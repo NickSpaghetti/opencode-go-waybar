@@ -423,7 +423,8 @@ FodyWeavers.xsd
 *.iws
 .fleet/
 
-# Project-local planning
+# Project local docs
+docs/
 Plan.md
 Roadmap.md
 

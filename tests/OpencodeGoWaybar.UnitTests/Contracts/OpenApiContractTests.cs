@@ -1,5 +1,6 @@
 using Xunit;
 using YamlDotNet.Serialization;
+using OpencodeGoWaybar.Models.Usages;
 
 namespace OpencodeGoWaybar.UnitTests.Contracts;
 
@@ -11,28 +12,33 @@ public class OpenApiContractTests
         "opencode-go-usage.openapi.yaml");
 
     [Fact]
-    public void ContractFileExists()
+    public void ShouldPublishTheContractFile()
     {
+        // given
         Assert.True(
             File.Exists(ContractPath),
             $"OpenAPI contract is missing at {ContractPath}.");
     }
 
     [Fact]
-    public void ContractParsesAsValidYaml()
+    public void ShouldParseTheContractAsValidYaml()
     {
+        // given
         File.Exists(ContractPath);
         var yaml = File.ReadAllText(ContractPath);
         var deserializer = new DeserializerBuilder().Build();
         var document = deserializer.Deserialize<object>(yaml);
+        // then
         Assert.NotNull(document);
     }
 
     [Fact]
-    public void ContractDeclaresTheUsageEndpoint()
+    public void ShouldDeclareTheUsageEndpointInTheContract()
     {
+        // given
         File.Exists(ContractPath);
         var yaml = File.ReadAllText(ContractPath);
+        // then
         Assert.Contains("/v1/usage", yaml);
         Assert.Contains("bearerAuth", yaml);
         Assert.Contains("UsageResponse", yaml);

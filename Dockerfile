@@ -1,9 +1,15 @@
-# .NET 10 SDK (Debian Bookworm) for base + dev stages.
 ARG DOTNET_SDK_IMAGE=mcr.microsoft.com/dotnet/sdk:10.0
 ARG DOTNET_RUNTIME_DEPS_IMAGE=mcr.microsoft.com/dotnet/runtime-deps:10.0-noble
 
 FROM ${DOTNET_SDK_IMAGE} AS base
 WORKDIR /workspace
+
+# 1. MOVE THE PREREQUISITES HERE (In the base stage)
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+        clang \
+        zlib1g-dev \
+ && rm -rf /var/lib/apt/lists/*
 
 ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     DOTNET_NOLOGO=1 \
@@ -26,6 +32,7 @@ COPY . .
 FROM base AS dev
 # The dev stage adds no extra tooling. It exists so the Makefile can build a
 # stable image name and other targets can base on it explicitly.
+# (Because it inherits from 'base', it now has clang installed!)
 
 FROM ${DOTNET_RUNTIME_DEPS_IMAGE} AS prod
 RUN apt-get update \
@@ -36,12 +43,8 @@ RUN apt-get update \
 # Publish the NativeAOT binary in the base stage and copy only the published
 # output into the prod verification image.
 FROM base AS publish
-RUN apt-get update \
- && apt-get install -y --no-install-recommends \
-        clang \
-        zlib1g-dev \
- && rm -rf /var/lib/apt/lists/* \
- && dotnet publish src/OpencodeGoWaybar/OpencodeGoWaybar.csproj \
+# 2. REMOVE THE APT-GET FROM HERE (It's already in base now)
+RUN dotnet publish src/OpencodeGoWaybar/OpencodeGoWaybar.csproj \
         --configuration Release \
         --runtime linux-x64
 

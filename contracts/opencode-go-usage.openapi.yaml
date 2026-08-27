@@ -77,7 +77,7 @@ components:
       properties:
         status:
           type: string
-          enum: [ok, no_api_key, network_error, bad_response, "HTTP 401", "HTTP 403", "HTTP 429"]
+          enum: [ok, rate-limited, no_api_key, network_error, bad_response, "HTTP 401", "HTTP 403", "HTTP 429"]
         percent:
           type: integer
           minimum: 0

@@ -7,8 +7,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <IsAotCompatible>true</IsAotCompatible>
-    <NoWarn>$(NoWarn);NU1903;IL3050;IL2026;IL3002;IL3053</NoWarn>
+    <!-- Test assemblies are never AOT-published, so the AOT analyser does not
+         apply to them; the product project carries that constraint. Without
+         this, YamlDotNet's reflective contract reader trips IL3050 here. -->
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <!--
+    The fallback palette, not the source of truth. Every key here is overwritten
+    at startup by PaletteApplier from the bar's own stylesheet; these values are
+    what the window uses on a machine with no Waybar config to read.
+  -->
+  <ResourceDictionary.ThemeDictionaries>
+
+    <ResourceDictionary x:Key="Dark">
+      <SolidColorBrush x:Key="WindowBg"     Color="#1E1E22" />
+      <SolidColorBrush x:Key="ChromeBg"     Color="#2A2B31" />
+      <SolidColorBrush x:Key="ToolbarBg"    Color="#232429" />
+      <SolidColorBrush x:Key="Hairline"     Color="#33343A" />
+      <SolidColorBrush x:Key="RowHairline"  Color="#2B2D34" />
+      <SolidColorBrush x:Key="RowAltBg"     Color="#24252B" />
+      <SolidColorBrush x:Key="TrackBg"      Color="#2B2D34" />
+      <SolidColorBrush x:Key="TextPrimary"  Color="#E7EAEE" />
+      <SolidColorBrush x:Key="TextBody"     Color="#D4D7DC" />
+      <SolidColorBrush x:Key="TextMuted"    Color="#9BA2AD" />
+      <SolidColorBrush x:Key="TextFaint"    Color="#7B828D" />
+      <SolidColorBrush x:Key="BarFill"      Color="#3D5F7F" />
+      <SolidColorBrush x:Key="BarFillToday" Color="#296695" />
+      <SolidColorBrush x:Key="WarnBg"       Color="#211D14" />
+      <SolidColorBrush x:Key="WarnBorder"   Color="#4A3A17" />
+      <SolidColorBrush x:Key="WarnText"     Color="#E2C68A" />
+      <SolidColorBrush x:Key="OkText"       Color="#CFE098" />
+      <SolidColorBrush x:Key="CautionText"  Color="#F0D69A" />
+      <SolidColorBrush x:Key="AccentLine"   Color="#3F6F9C" />
+      <SolidColorBrush x:Key="AccentText"   Color="#8FBDE8" />
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="WindowBg"     Color="#FAFBFD" />
+      <SolidColorBrush x:Key="ChromeBg"     Color="#FFFFFF" />
+      <SolidColorBrush x:Key="ToolbarBg"    Color="#FFFFFF" />
+      <SolidColorBrush x:Key="Hairline"     Color="#DFE8EC" />
+      <SolidColorBrush x:Key="RowHairline"  Color="#DFE8EC" />
+      <SolidColorBrush x:Key="RowAltBg"     Color="#F6F9FB" />
+      <SolidColorBrush x:Key="TrackBg"      Color="#E6ECF0" />
+      <SolidColorBrush x:Key="TextPrimary"  Color="#2B3033" />
+      <SolidColorBrush x:Key="TextBody"     Color="#4A4F50" />
+      <SolidColorBrush x:Key="TextMuted"    Color="#7B858A" />
+      <SolidColorBrush x:Key="TextFaint"    Color="#8A9398" />
+      <SolidColorBrush x:Key="BarFill"      Color="#B9CDDD" />
+      <SolidColorBrush x:Key="BarFillToday" Color="#296695" />
+      <SolidColorBrush x:Key="WarnBg"       Color="#FCF8E3" />
+      <SolidColorBrush x:Key="WarnBorder"   Color="#F4E3AE" />
+      <SolidColorBrush x:Key="WarnText"     Color="#8A6300" />
+      <SolidColorBrush x:Key="OkText"       Color="#5D7520" />
+      <SolidColorBrush x:Key="CautionText"  Color="#8A6300" />
+      <SolidColorBrush x:Key="AccentLine"   Color="#296695" />
+      <SolidColorBrush x:Key="AccentText"   Color="#296695" />
+    </ResourceDictionary>
+
+  </ResourceDictionary.ThemeDictionaries>
+
+  <!-- variant-independent -->
+  <SolidColorBrush x:Key="Steel"   Color="#296695" />
+  <SolidColorBrush x:Key="Ok"      Color="#9ABD3D" />
+  <SolidColorBrush x:Key="Caution" Color="#FFC243" />
+  <SolidColorBrush x:Key="Danger"  Color="#F44336" />
+  <FontFamily x:Key="Mono">JetBrains Mono, Cascadia Mono, monospace</FontFamily>
+</ResourceDictionary>

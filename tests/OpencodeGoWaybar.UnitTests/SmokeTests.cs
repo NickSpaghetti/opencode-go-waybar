@@ -5,5 +5,5 @@ namespace OpencodeGoWaybar.UnitTests;
 public class SmokeTests
 {
     [Fact]
-    public void SmokeTest() => Assert.True(true);
+    public void ShouldRunTheSuite() => Assert.True(true);
 }

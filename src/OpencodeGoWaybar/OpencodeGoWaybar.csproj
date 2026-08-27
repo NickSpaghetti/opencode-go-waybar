@@ -10,7 +10,18 @@
     <InvariantGlobalization>true</InvariantGlobalization>
     <IsAotCompatible>true</IsAotCompatible>
     <PublishAot>true</PublishAot>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Dapper's own reflective paths (DefaultTypeMap, SqlMapper.AddTypeHandlerCore)
+         trip the trim and AOT analysers. Dapper.AOT's generated interceptors replace
+         every one of those call sites, and DatabaseVerticalTests proves the shipped
+         NativeAOT binary reads SQLite. These two roll-ups are the only suppression
+         in the project; our own code must stay warning-free. -->
+    <NoWarn>$(NoWarn);IL2104;IL3053</NoWarn>
     <UserSecretsId>opencode-go-waybar-development</UserSecretsId>
+    <!-- Dapper.AOT replaces Dapper's runtime IL emit via interceptors. -->
+    <InterceptorsNamespaces>$(InterceptorsNamespaces);Dapper.AOT</InterceptorsNamespaces>
+    <InterceptorsPreviewNamespaces>$(InterceptorsPreviewNamespaces);Dapper.AOT</InterceptorsPreviewNamespaces>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -29,19 +40,22 @@
     <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0">
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
+    <!-- Shipped, not dev-only: the broker reads user secrets unconditionally,
+         so the published binary needs this assembly present. -->
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+    <PackageReference Include="Dapper" Version="2.1.66" />
+    <PackageReference Include="Dapper.AOT" Version="1.0.52" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="OpencodeGoWaybar.UnitTests" />
+    <InternalsVisibleTo Include="OpencodeGoWaybar.IntegrationTests" />
     <InternalsVisibleTo Include="DynamicProxyGenAssembly2" />
   </ItemGroup>
 
