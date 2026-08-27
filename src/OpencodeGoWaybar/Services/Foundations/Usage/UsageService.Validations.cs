@@ -1,5 +1,6 @@
-using OpencodeGoWaybar.Brokers.Apis.Usage;
-using OpencodeGoWaybar.Services.Foundations.Usage.Exceptions;
+using OpencodeGoWaybar.Brokers.Usages;
+using OpencodeGoWaybar.Models.Usages.Exceptions;
+using OpencodeGoWaybar.Models.Usages;
 
 namespace OpencodeGoWaybar.Services.Foundations.Usage;
 
@@ -7,7 +8,7 @@ internal sealed partial class UsageService
 {
     private void ValidateApiKey()
     {
-        if (string.IsNullOrWhiteSpace(_secrets.Value.ApiKey))
+        if (string.IsNullOrWhiteSpace(_secrets.ApiKey))
         {
             throw new UsageCredentialsMissingException();
         }

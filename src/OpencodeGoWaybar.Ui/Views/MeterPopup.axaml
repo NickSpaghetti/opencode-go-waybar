@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:OpencodeGoWaybar.Ui.ViewModels"
+        x:Class="OpencodeGoWaybar.Ui.Views.MeterPopup"
+        x:DataType="vm:UsageWindowViewModel"
+        Title="OpenCode Go Usage"
+        Width="420" Height="500"
+        CanResize="False"
+        Background="{DynamicResource WindowBg}"
+        FontFamily="Inter, Lato, sans-serif">
+
+  <Window.Styles>
+    <!-- DynamicResource, not Static: the Mono family is replaced at startup with
+         whatever family the bar's stylesheet names, and again on a live change. -->
+    <Style Selector="TextBlock.mono">
+      <Setter Property="FontFamily" Value="{DynamicResource Mono}" />
+    </Style>
+    <Style Selector="TextBlock.micro">
+      <Setter Property="FontFamily" Value="{DynamicResource Mono}" />
+      <Setter Property="FontSize" Value="10.5" />
+      <Setter Property="Foreground" Value="{DynamicResource TextFaint}" />
+    </Style>
+    <Style Selector="ProgressBar.meter">
+      <Setter Property="Height" Value="6" />
+      <Setter Property="CornerRadius" Value="3" />
+      <Setter Property="Minimum" Value="0" />
+      <Setter Property="Maximum" Value="100" />
+      <Setter Property="Background" Value="{DynamicResource TrackBg}" />
+    </Style>
+  </Window.Styles>
+
+  <StackPanel Margin="22,20" Spacing="18">
+
+    <ItemsControl ItemsSource="{Binding Windows}">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <StackPanel Spacing="18" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:UsageWindowGauge">
+          <StackPanel Spacing="11">
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBlock FontSize="13" Text="{Binding Label}"
+                         Foreground="{DynamicResource TextBody}" />
+              <!-- PercentLabel, not Percent: an unreported window must show a
+                   dash rather than a confident "0%". -->
+              <TextBlock Grid.Column="1" Classes="mono" FontSize="13"
+                         FontWeight="Medium"
+                         Text="{Binding PercentLabel}"
+                         Foreground="{Binding StatusBrushKey,
+                                      Converter={StaticResource BrushKeyConverter}}" />
+            </Grid>
+            <ProgressBar Classes="meter" Value="{Binding Percent}"
+                         Foreground="{Binding StatusBrushKey,
+                                      Converter={StaticResource BrushKeyConverter}}" />
+            <TextBlock Classes="micro">
+              <Run Text="{Binding Countdown}" />
+              <Run Text=" · " />
+              <Run Text="{Binding ResetsAtUtc}" />
+            </TextBlock>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Border Margin="22,16,22,0" Padding="13,11" CornerRadius="5"
+            IsVisible="{Binding HasWarning}"
+            Background="{DynamicResource WarnBg}"
+            BorderBrush="{DynamicResource WarnBorder}"
+            BorderThickness="1">
+      <TextBlock Classes="mono" FontSize="11" TextWrapping="Wrap"
+                 Foreground="{DynamicResource WarnText}"
+                 Text="{Binding WarningText}" />
+    </Border>
+
+    <Border Height="1" Background="{DynamicResource Hairline}" />
+
+    <Grid ColumnDefinitions="*,Auto" VerticalAlignment="Bottom">
+      <StackPanel Spacing="3">
+        <TextBlock FontSize="11" Text="Last 7 days"
+                   Foreground="{DynamicResource TextFaint}" />
+        <TextBlock Classes="mono" FontSize="17"
+                   Foreground="{DynamicResource TextPrimary}">
+          <Run Text="{Binding TotalTokens, StringFormat='{}{0:N0}'}" />
+          <Run Text=" tokens" FontSize="11"
+               Foreground="{DynamicResource TextFaint}" />
+        </TextBlock>
+      </StackPanel>
+      <TextBlock Grid.Column="1" Classes="mono" FontSize="17"
+                 VerticalAlignment="Bottom"
+                 Foreground="{DynamicResource TextPrimary}"
+                 Text="{Binding TotalCost, StringFormat='{}{0:C2}'}" />
+    </Grid>
+
+    <!-- oldest day at the left, today picked out -->
+    <ItemsControl ItemsSource="{Binding DaysOldestFirst}" Height="44">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate>
+          <UniformGrid Rows="1" />
+        </ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="vm:UsageWindowRow">
+          <Border Margin="2.5,0" VerticalAlignment="Bottom"
+                  CornerRadius="2,2,0,0"
+                  ToolTip.Tip="{Binding TokensLabel}"
+                  Height="{Binding BarFraction,
+                           Converter={StaticResource BarHeightConverter},
+                           ConverterParameter=44}"
+                  Background="{Binding IsToday,
+                               Converter={StaticResource BarBrushConverter}}" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Grid ColumnDefinitions="*,Auto">
+      <TextBlock Classes="micro" FontSize="10" Text="{Binding FirstDayLabel}" />
+      <TextBlock Grid.Column="1" Classes="micro" FontSize="10"
+                 Text="{Binding LastDayLabel}" />
+    </Grid>
+  </StackPanel>
+</Window>

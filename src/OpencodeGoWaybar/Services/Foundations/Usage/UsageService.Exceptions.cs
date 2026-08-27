@@ -1,7 +1,9 @@
 using System.Net;
 using System.Text.Json;
-using OpencodeGoWaybar.Brokers.Apis.Usage;
-using OpencodeGoWaybar.Services.Foundations.Usage.Exceptions;
+using OpencodeGoWaybar.Brokers.Usages;
+using System.Text.Json.Nodes;
+using OpencodeGoWaybar.Models.Usages;
+using OpencodeGoWaybar.Models.Usages.Exceptions;
 
 namespace OpencodeGoWaybar.Services.Foundations.Usage;
 
@@ -12,23 +14,20 @@ internal sealed partial class UsageService
         try
         {
             ValidateApiKey();
-            var response = await _usageBroker.GetUsageAsync(_secrets.Value.ApiKey!, cancellationToken);
-            ThrowForFailureStatus(response.StatusCode);
+            var response = await _usageBroker.GetUsageAsync(_secrets.ApiKey!, cancellationToken);
+            ThrowForFailureStatus(response);
             var usage = JsonSerializer.Deserialize(response.Body, UsageJsonContext.Default.UsageResponse)
                 ?? throw new InvalidOperationException("The usage API returned an empty response.");
             ValidateResponse(usage);
             return usage;
         }
-        catch (HttpRequestException exception) when (exception.StatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        catch (Exception exception) when (exception is IUsageApiFailure)
         {
-            throw await LogAndReturnAsync(new UsageAuthenticationException(exception));
-        }
-        catch (HttpRequestException exception) when (exception.StatusCode == HttpStatusCode.TooManyRequests)
-        {
-            throw await LogAndReturnAsync(new UsageRateLimitedException(exception));
+            throw await LogAndReturnAsync(exception);
         }
         catch (HttpRequestException exception)
         {
+            // No status: the request never reached the API.
             throw await LogAndReturnAsync(new UsageApiUnavailableException(exception));
         }
         catch (JsonException exception)
@@ -59,21 +58,82 @@ internal sealed partial class UsageService
         return exception;
     }
 
-    private static void ThrowForFailureStatus(HttpStatusCode statusCode)
+    /// <summary>
+    /// Turns a failed response into a local exception that carries whatever the
+    /// API said about it, so the reason can reach the bar instead of being
+    /// flattened into "unavailable".
+    /// </summary>
+    private static void ThrowForFailureStatus(UsageApiBrokerResponse response)
     {
-        if (statusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+        if ((int)response.StatusCode < 400)
         {
-            throw new HttpRequestException("The usage API rejected the request.", null, statusCode);
+            return;
         }
 
-        if (statusCode == HttpStatusCode.TooManyRequests)
+        var apiError = ParseApiError(response.Body);
+
+        var inner = new HttpRequestException(
+            $"The usage API returned {(int)response.StatusCode}.",
+            inner: null,
+            response.StatusCode);
+
+        throw response.StatusCode switch
         {
-            throw new HttpRequestException("The usage API rate-limited the request.", null, statusCode);
+            HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden =>
+                new UsageAuthenticationException(inner, apiError),
+            HttpStatusCode.TooManyRequests =>
+                new UsageRateLimitedException(inner, apiError),
+            _ => (Exception)new UsageApiUnavailableException(inner, apiError),
+        };
+    }
+
+    /// <summary>
+    /// Reads the error body defensively. The published contract types it as a
+    /// free-form object, and the two shapes seen in practice disagree: the live
+    /// API nests {"error":{"type","message"}} while the recorded rate-limit
+    /// fixture uses a flat {"error":"...","message":"..."}.
+    /// </summary>
+    private static UsageApiError? ParseApiError(string body)
+    {
+        if (string.IsNullOrWhiteSpace(body))
+        {
+            return null;
         }
 
-        if ((int)statusCode >= 400)
+        JsonNode? document;
+
+        try
         {
-            throw new HttpRequestException("The usage API returned an error.", null, statusCode);
+            document = JsonNode.Parse(body);
         }
+        catch (JsonException)
+        {
+            return null;
+        }
+
+        if (document is null)
+        {
+            return null;
+        }
+
+        var error = document["error"];
+
+        var (type, message) = error switch
+        {
+            JsonObject nested => (Text(nested["type"]), Text(nested["message"])),
+            not null => (Text(error), Text(document["message"])),
+            _ => (Text(document["type"]), Text(document["message"])),
+        };
+
+        return type is null && message is null ? null : new UsageApiError(type, message);
+    }
+
+    private static string? Text(JsonNode? node)
+    {
+        var value = node?.GetValueKind() == System.Text.Json.JsonValueKind.String
+            ? node.GetValue<string>()
+            : null;
+
+        return string.IsNullOrWhiteSpace(value) ? null : value;
     }
 }

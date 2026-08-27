@@ -1,7 +1,6 @@
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Configuration.UserSecrets;
 using OpencodeGoWaybar.Brokers.Configurations;
-using OpencodeGoWaybar.Brokers.Support.Logging;
+using OpencodeGoWaybar.Brokers.Loggings;
 using OpencodeGoWaybar.Models.Configurations;
 using OpencodeGoWaybar.Services.Foundations.Configurations;
 using NSubstitute;
@@ -13,20 +12,34 @@ namespace OpencodeGoWaybar.UnitTests.Configuration;
 public class ConfigurationLoadingTests
 {
     private static ConfigurationService CreateFoundation() =>
-        new(new ConfigurationBroker(), new OpenCodeGoOptionsValidator(), Substitute.For<ILoggingBroker>());
+        new(new ConfigurationBroker(), Substitute.For<ILoggingBroker>());
 
-    [Fact]
-    public void EmptyConfigurationReturnsDefaults()
+    /// <summary>
+    /// Home-relative defaults are expanded when options are bound, because
+    /// nothing downstream expands `~` — File.Exists would take it literally.
+    /// The home directory itself varies by environment, so assert the shape.
+    /// </summary>
+    private static void AssertExpandedHomePath(string expectedSuffix, string actual)
     {
-        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: null);
-
-        Assert.Equal(300, options.Value.RefreshIntervalSeconds);
-        Assert.Equal("~/.local/share/opencode/auth.json", options.Value.AuthPath);
+        Assert.False(actual.StartsWith('~'), $"'{actual}' still starts with an unexpanded '~'.");
+        Assert.EndsWith(expectedSuffix, actual, StringComparison.Ordinal);
     }
 
     [Fact]
-    public void JsonFileOverridesDefaults()
+    public void ShouldReturnDefaultsWhenConfigurationIsEmpty()
     {
+        // given
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: null);
+
+        // then
+        Assert.Equal(300, options.RefreshIntervalSeconds);
+        AssertExpandedHomePath("/.local/share/opencode/auth.json", options.AuthPath);
+    }
+
+    [Fact]
+    public void ShouldOverrideDefaultsFromJsonFile()
+    {
+        // given
         var path = WriteTempConfig("""
             {
               "RefreshIntervalSeconds": 600,
@@ -34,24 +47,28 @@ public class ConfigurationLoadingTests
             }
             """);
 
-        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
 
-        Assert.Equal(600, options.Value.RefreshIntervalSeconds);
-        Assert.Equal("/etc/opencode/auth.json", options.Value.AuthPath);
-        Assert.Equal("~/.local/share/opencode/opencode.db", options.Value.DatabasePath);
+        // then
+        Assert.Equal(600, options.RefreshIntervalSeconds);
+        Assert.Equal("/etc/opencode/auth.json", options.AuthPath);
+        AssertExpandedHomePath("/.local/share/opencode/opencode.db", options.DatabasePath);
     }
 
     [Fact]
-    public void MissingJsonFileFallsBackToDefaults()
+    public void ShouldFallBackToDefaultsWhenJsonFileIsMissing()
     {
-        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: "/tmp/does-not-exist.json");
+        // given
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: "/tmp/does-not-exist.json");
 
-        Assert.Equal(300, options.Value.RefreshIntervalSeconds);
+        // then
+        Assert.Equal(300, options.RefreshIntervalSeconds);
     }
 
     [Fact]
-    public void EnvironmentVariablesOverrideJsonFile()
+    public void ShouldOverrideJsonFileFromEnvironmentVariables()
     {
+        // given
         var path = WriteTempConfig("""
             {
               "RefreshIntervalSeconds": 600
@@ -62,38 +79,31 @@ public class ConfigurationLoadingTests
             ("OPENCODE_GO_RefreshIntervalSeconds", "1800"),
             ("OPENCODE_GO_AuthPath", "/env/auth.json"));
 
-        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
 
-        Assert.Equal(1800, options.Value.RefreshIntervalSeconds);
-        Assert.Equal("/env/auth.json", options.Value.AuthPath);
+        // then
+        Assert.Equal(1800, options.RefreshIntervalSeconds);
+        Assert.Equal("/env/auth.json", options.AuthPath);
     }
 
     [Fact]
-    public void AssemblyDeclaresUserSecretsId()
+    public void ShouldDeclareUserSecretsIdOnTheAssembly()
     {
+        // given
         var attribute = typeof(OpenCodeGoOptions).Assembly
             .GetCustomAttributes(typeof(UserSecretsIdAttribute), inherit: false)
             .Cast<UserSecretsIdAttribute>()
             .SingleOrDefault();
 
+        // then
         Assert.NotNull(attribute);
         Assert.Equal("opencode-go-waybar-development", attribute!.UserSecretsId);
     }
 
     [Fact]
-    public void ReadsApiKeyFromTheDedicatedEnvironmentVariable()
+    public void ShouldLeaveKnownKeysAtDefaultWhenJsonHasUnknownKeys()
     {
-        using var scope = new EnvironmentVariableScope(
-            (OpenCodeGoOptions.ApiKeyEnvironmentVariable, "test-api-key"));
-
-        var secrets = CreateFoundation().RetrieveSecrets().Value;
-
-        Assert.Equal("test-api-key", secrets.ApiKey);
-    }
-
-    [Fact]
-    public void JsonFileWithUnknownKeysLeavesKnownKeysAtDefault()
-    {
+        // given
         var path = WriteTempConfig("""
             {
               "RefreshIntervalSeconds": 120,
@@ -101,10 +111,11 @@ public class ConfigurationLoadingTests
             }
             """);
 
-        IOptions<OpenCodeGoOptions> options = CreateFoundation().RetrieveOptions(configPath: path);
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
 
-        Assert.Equal(120, options.Value.RefreshIntervalSeconds);
-        Assert.Equal("~/.local/share/opencode/auth.json", options.Value.AuthPath);
+        // then
+        Assert.Equal(120, options.RefreshIntervalSeconds);
+        AssertExpandedHomePath("/.local/share/opencode/auth.json", options.AuthPath);
     }
 
     private static string WriteTempConfig(string json)

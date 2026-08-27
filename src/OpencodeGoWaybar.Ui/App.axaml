@@ -1,0 +1,25 @@
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:converters="using:OpencodeGoWaybar.Ui.Converters"
+             x:Class="OpencodeGoWaybar.Ui.App"
+             RequestedThemeVariant="Default">
+
+  <Application.Styles>
+    <FluentTheme />
+    <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
+  </Application.Styles>
+
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.MergedDictionaries>
+        <!-- avares uses the ASSEMBLY name, which is not the root namespace here. -->
+        <ResourceInclude Source="avares://opencode-go-waybar-ui/Themes/Palette.axaml" />
+      </ResourceDictionary.MergedDictionaries>
+
+      <converters:BrushKeyConverter x:Key="BrushKeyConverter" />
+      <converters:RingTextConverter x:Key="RingTextConverter" />
+      <converters:BarHeightConverter x:Key="BarHeightConverter" />
+      <converters:BarBrushConverter x:Key="BarBrushConverter" />
+    </ResourceDictionary>
+  </Application.Resources>
+</Application>

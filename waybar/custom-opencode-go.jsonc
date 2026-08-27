@@ -1,0 +1,10 @@
+// Add "custom/opencode-go" to a Waybar module list.
+"custom/opencode-go": {
+    "exec": "opencode-go-waybar",
+    "exec-if": "pgrep -x opencode >/dev/null",
+    "return-type": "json",
+    "interval": 5,
+    "tooltip": true,
+    "format": "{}",
+    "on-click": "opencode-go-waybar-ui"
+}

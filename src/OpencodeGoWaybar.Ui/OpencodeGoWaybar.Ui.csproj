@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>OpencodeGoWaybar.Ui</RootNamespace>
+    <!-- Load-bearing: Avalonia derives the Wayland app-id and the X11 WM_CLASS
+         from the entry assembly, and the Hyprland window rules match on it.
+         Avalonia 12.1 exposes no option to override either, so renaming this
+         silently breaks every rule in waybar/hyprland-opencode-go.conf. -->
+    <AssemblyName>opencode-go-waybar-ui</AssemblyName>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <!-- Every {Binding} is checked against its x:DataType at build time, which is
+         the only way to catch a bad binding path without a display attached. -->
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Deliberately NOT set: InvariantGlobalization (the module sets it, but it
+         renders currency as the generic sign), PublishAot and PublishSingleFile
+         (Avalonia under NativeAOT buys nothing here and risks a lot). -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Controls.DataGrid" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+    <!-- The native Wayland backend, opt-in per the 12.1 release notes. -->
+    <PackageReference Include="Avalonia.Wayland" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The UI reaches the flow through exposers only; it has no brokers or
+         services of its own. -->
+    <ProjectReference Include="..\OpencodeGoWaybar\OpencodeGoWaybar.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OpencodeGoWaybar.Ui.UnitTests" />
+  </ItemGroup>
+
+</Project>

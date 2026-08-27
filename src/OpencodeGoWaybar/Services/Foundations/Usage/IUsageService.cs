@@ -1,4 +1,5 @@
-using OpencodeGoWaybar.Brokers.Apis.Usage;
+using OpencodeGoWaybar.Brokers.Usages;
+using OpencodeGoWaybar.Models.Usages;
 
 namespace OpencodeGoWaybar.Services.Foundations.Usage;
 

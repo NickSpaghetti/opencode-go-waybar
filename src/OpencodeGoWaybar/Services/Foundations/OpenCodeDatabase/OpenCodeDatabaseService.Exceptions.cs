@@ -1,22 +1,29 @@
 using Microsoft.Data.Sqlite;
-using OpencodeGoWaybar.Brokers.Storages.OpenCode;
-using OpencodeGoWaybar.Brokers.Support.Logging;
-using OpencodeGoWaybar.Services.Foundations.OpenCodeDatabase.Exceptions;
+using OpencodeGoWaybar.Brokers.Storages;
+using OpencodeGoWaybar.Brokers.Loggings;
+using OpencodeGoWaybar.Models.OpenCodeMessages.Exceptions;
+using OpencodeGoWaybar.Models.OpenCodeMessages;
+using OpencodeGoWaybar.Models.Usages;
 
 namespace OpencodeGoWaybar.Services.Foundations.OpenCodeDatabase;
 
 internal sealed partial class OpenCodeDatabaseService
 {
-    private async ValueTask<IReadOnlyList<OpenCodeMessage>> TryCatchAsync(
+    private async ValueTask<IReadOnlyList<RecentUsageDay>> TryCatchAsync(
         DateTimeOffset cutoff,
+        string providerId,
         CancellationToken cancellationToken)
     {
         try
         {
             ValidateDatabasePath();
-            var messages = await _databaseBroker.RetrieveMessagesAsync(cutoff, cancellationToken);
-            ValidateMessages(messages);
-            return messages;
+
+            IReadOnlyList<OpenCodeUsageDayRow> rows =
+                await _databaseBroker.SelectUsageDaysByCutoffAsync(cutoff, providerId, cancellationToken);
+
+            ValidateUsageDays(rows);
+
+            return MapUsageDays(rows);
         }
         catch (SqliteException exception) when (exception.Message.Contains("no such table: message", StringComparison.OrdinalIgnoreCase))
         {
@@ -44,7 +51,18 @@ internal sealed partial class OpenCodeDatabaseService
     {
         try
         {
-            return await _databaseBroker.RetrieveLastWriteTimeAsync(cancellationToken);
+            DateTimeOffset writeTime = await _databaseBroker.GetLastWriteTimeAsync(cancellationToken);
+
+            // File.GetLastWriteTimeUtc answers with a 1601 sentinel for a file
+            // that is not there rather than throwing, so absence has to be read
+            // out of the value. Treating the sentinel as a real timestamp made
+            // the module think the database had changed and try to read it.
+            return writeTime == MissingDatabaseWriteTime ? null : writeTime;
+        }
+        catch (Exception exception) when (exception is FileNotFoundException or DirectoryNotFoundException)
+        {
+            // opencode has not created its database yet.
+            return null;
         }
         catch (Exception exception)
         {

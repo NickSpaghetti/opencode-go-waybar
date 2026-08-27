@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Options;
 using OpencodeGoWaybar.Brokers.Configurations;
-using OpencodeGoWaybar.Brokers.Support.Logging;
+using OpencodeGoWaybar.Brokers.Loggings;
 using OpencodeGoWaybar.Models.Configurations;
 
 namespace OpencodeGoWaybar.Services.Foundations.Configurations;
@@ -9,37 +8,32 @@ namespace OpencodeGoWaybar.Services.Foundations.Configurations;
 internal sealed partial class ConfigurationService : IConfigurationService
 {
     private readonly IConfigurationBroker _configurationBroker;
-    private readonly IValidateOptions<OpenCodeGoOptions> _validator;
     private readonly ILoggingBroker _loggingBroker;
 
     public ConfigurationService(
         IConfigurationBroker configurationBroker,
-        IValidateOptions<OpenCodeGoOptions> validator,
         ILoggingBroker loggingBroker)
     {
         _configurationBroker = configurationBroker;
-        _validator = validator;
         _loggingBroker = loggingBroker;
     }
-    public IOptions<OpenCodeGoOptions> RetrieveOptions(string? configPath = null)
+    public OpenCodeGoOptions RetrieveOptions(string? configPath = null)
     {
         return TryCatch(() => RetrieveOptionsCore(configPath));
     }
 
-    public IOptions<OpenCodeGoSecrets> RetrieveSecrets(string? configPath = null)
+    private OpenCodeGoOptions RetrieveOptionsCore(string? configPath)
     {
-        return TryCatch(() => RetrieveSecretsCore(configPath));
-    }
-
-    private IOptions<OpenCodeGoOptions> RetrieveOptionsCore(string? configPath)
-    {
-        var configuration = _configurationBroker.Build(configPath);
+        var configuration = _configurationBroker.Build(
+            ExpandHomeRelativePath(configPath ?? OpenCodeGoOptions.DefaultConfigPath));
         try
         {
             var options = new OpenCodeGoOptions();
             configuration.Bind(options);
+            BindProcessPresentOverride(configuration, options);
+            ExpandHomeRelativePaths(options);
             ValidateOptions(options);
-            return Options.Create(options);
+            return options;
         }
         finally
         {
@@ -47,28 +41,42 @@ internal sealed partial class ConfigurationService : IConfigurationService
         }
     }
 
-    private IOptions<OpenCodeGoSecrets> RetrieveSecretsCore(string? configPath)
+    /// <summary>
+    /// Reads the process-detection override by its full environment variable name.
+    /// The prefixed provider strips <c>OPENCODE_GO_</c> down to <c>PROCESS_PRESENT</c>,
+    /// which the binder will not match to <see cref="OpenCodeGoOptions.ProcessPresentOverride"/>.
+    /// A value already bound from a JSON file survives when the variable is unset.
+    /// </summary>
+    private static void BindProcessPresentOverride(IConfiguration configuration, OpenCodeGoOptions options)
     {
-        var configuration = _configurationBroker.Build(configPath);
-        try
+        if (bool.TryParse(configuration[OpenCodeGoOptions.ProcessPresentEnvironmentVariable], out var processIsPresent))
         {
-            return Options.Create(new OpenCodeGoSecrets
-            {
-                ApiKey = configuration[OpenCodeGoOptions.ApiKeyEnvironmentVariable],
-            });
-        }
-        finally
-        {
-            (configuration as IDisposable)?.Dispose();
+            options.ProcessPresentOverride = processIsPresent;
         }
     }
 
-    private void ValidateOptions(OpenCodeGoOptions options)
+    /// <summary>
+    /// Turns the documented `~/...` defaults into real paths. Nothing else in
+    /// the process expands them: the shell does it for command lines, but these
+    /// values arrive from configuration, where a literal `~` would mean a
+    /// directory of that name in the working directory.
+    /// </summary>
+    private static void ExpandHomeRelativePaths(OpenCodeGoOptions options)
     {
-        var result = _validator.Validate(Options.DefaultName, options);
-        if (result.Failed)
+        options.AuthPath = ExpandHomeRelativePath(options.AuthPath);
+        options.DatabasePath = ExpandHomeRelativePath(options.DatabasePath);
+        options.CacheDirectory = ExpandHomeRelativePath(options.CacheDirectory);
+    }
+
+    private static string ExpandHomeRelativePath(string path)
+    {
+        if (!path.StartsWith("~/", StringComparison.Ordinal))
         {
-            throw new OptionsValidationException(Options.DefaultName, typeof(OpenCodeGoOptions), result.Failures!);
+            return path;
         }
+
+        var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        return string.IsNullOrEmpty(home) ? path : Path.Combine(home, path[2..]);
     }
 }

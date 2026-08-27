@@ -8,28 +8,33 @@ public class UsageFixturesTests
     private static string FixturesDir => Path.Combine(FindRepoRoot(), "contracts", "fixtures");
 
     [Fact]
-    public void SuccessFixtureExists()
+    public void ShouldPublishTheSuccessFixture()
     {
+        // given
         Assert.True(File.Exists(Path.Combine(FixturesDir, "usage-success.json")));
     }
 
     [Fact]
-    public void PartialFixtureExists()
+    public void ShouldPublishThePartialFixture()
     {
+        // given
         Assert.True(File.Exists(Path.Combine(FixturesDir, "usage-partial.json")));
     }
 
     [Fact]
-    public void RateLimitedFixtureExists()
+    public void ShouldPublishTheRateLimitedFixture()
     {
+        // given
         Assert.True(File.Exists(Path.Combine(FixturesDir, "usage-rate-limited.json")));
     }
 
     [Fact]
-    public void SuccessFixtureHasUsageWindows()
+    public void ShouldCarryUsageWindowsInTheSuccessFixture()
     {
+        // given
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(FixturesDir, "usage-success.json")));
         var root = doc.RootElement;
+        // then
         Assert.True(root.TryGetProperty("usage", out var usage));
         Assert.Equal(JsonValueKind.Object, usage.ValueKind);
         foreach (var window in new[] { "rolling", "weekly", "monthly" })
@@ -42,17 +47,20 @@ public class UsageFixturesTests
     }
 
     [Fact]
-    public void PartialFixtureHasMissingRollingWindow()
+    public void ShouldOmitTheRollingWindowInThePartialFixture()
     {
+        // given
         using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(FixturesDir, "usage-partial.json")));
         var rolling = doc.RootElement.GetProperty("usage").GetProperty("rolling");
+        // then
         Assert.Equal("no_api_key", rolling.GetProperty("status").GetString());
         Assert.Equal(JsonValueKind.Null, rolling.GetProperty("percent").ValueKind);
     }
 
     [Fact]
-    public void FixturesDoNotContainApiKeys()
+    public void ShouldNotContainApiKeysInFixtures()
     {
+        // given
         foreach (var file in Directory.EnumerateFiles(FixturesDir, "*.json"))
         {
             var content = File.ReadAllText(file);

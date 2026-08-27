@@ -6,18 +6,21 @@ namespace OpencodeGoWaybar.UnitTests.Sqlite;
 public class OpenCodeDatabaseFixtureTests
 {
     [Fact]
-    public void FixtureCreatesMessageTable()
+    public void ShouldCreateTheMessageTable()
     {
+        // given
         using var fixture = new OpenCodeDatabaseFixture();
         using var command = fixture.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='message'";
         var count = Convert.ToInt64(command.ExecuteScalar());
+        // then
         Assert.Equal(1, count);
     }
 
     [Fact]
-    public void FixtureInsertRoundTrip()
+    public void ShouldRoundTripAnInsertedMessage()
     {
+        // given
         using var fixture = new OpenCodeDatabaseFixture();
         fixture.InsertMessage(
             id: "msg-1",
@@ -28,14 +31,16 @@ public class OpenCodeDatabaseFixtureTests
         using var command = fixture.CreateCommand();
         command.CommandText = "SELECT data FROM message WHERE id = 'msg-1'";
         var stored = (string?)command.ExecuteScalar();
+        // then
         Assert.NotNull(stored);
         using var doc = JsonDocument.Parse(stored!);
         Assert.Equal("opencode-go", doc.RootElement.GetProperty("providerID").GetString());
     }
 
     [Fact]
-    public void FixtureFiltersByProviderId()
+    public void ShouldFilterByProviderId()
     {
+        // given
         using var fixture = new OpenCodeDatabaseFixture();
         fixture.InsertMessage("m1", "s1", 1_700_000_000_000L, "{\"providerID\":\"opencode-go\",\"tokens\":{\"total\":10},\"cost\":0.001}");
         fixture.InsertMessage("m2", "s1", 1_700_000_100_000L, "{\"providerID\":\"other\",\"tokens\":{\"total\":99},\"cost\":0.99}");
@@ -48,12 +53,14 @@ public class OpenCodeDatabaseFixtureTests
             WHERE json_extract(data, '$.providerID') = 'opencode-go'
             """;
         var count = Convert.ToInt64(command.ExecuteScalar());
+        // then
         Assert.Equal(2, count);
     }
 
     [Fact]
-    public void FixtureAcceptsMissingTokensAndCostFields()
+    public void ShouldAcceptMissingTokensAndCostFields()
     {
+        // given
         using var fixture = new OpenCodeDatabaseFixture();
         fixture.InsertMessage("m1", "s1", 1_700_000_000_000L, "{\"providerID\":\"opencode-go\"}");
         fixture.InsertMessage("m2", "s1", 1_700_000_100_000L, "{\"providerID\":\"opencode-go\",\"tokens\":{}}");
@@ -61,6 +68,7 @@ public class OpenCodeDatabaseFixtureTests
         using var command = fixture.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM message";
         var count = Convert.ToInt64(command.ExecuteScalar());
+        // then
         Assert.Equal(2, count);
     }
 }

@@ -4,5 +4,5 @@ namespace OpencodeGoWaybar.Brokers.Configurations;
 
 internal interface IConfigurationBroker
 {
-    IConfigurationRoot Build(string? configPath);
+    IConfigurationRoot Build(string configPath);
 }
