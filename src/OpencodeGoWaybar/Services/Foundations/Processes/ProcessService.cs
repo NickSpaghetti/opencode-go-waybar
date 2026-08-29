@@ -33,7 +33,7 @@ internal sealed partial class ProcessService : IProcessService
 
     private async ValueTask<bool> RetrieveIsOpenCodeRunningAsync(CancellationToken cancellationToken)
     {
-        if (_options.ProcessPresentOverride is bool processIsPresent)
+        if (_options.ProcessPresentOverride is { } processIsPresent)
         {
             return processIsPresent;
         }
