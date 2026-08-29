@@ -10,12 +10,6 @@ namespace OpencodeGoWaybar.Services.Orchestrations.UsageWindows;
 /// The allowance windows: whether OpenCode is even running, a throttled refresh of
 /// the API snapshot, and the health verdict for each window.
 ///
-/// Three foundation dependencies, all of one variation — Two-Three and Florance
-/// both hold (§2.3.2.1.1, §2.3.2.1). The process gate lives here because "do not
-/// fetch usage when the process is not running" is business logic, and business
-/// logic is what an orchestration is for; it was previously sitting in the
-/// aggregation, which may hold none (§2.4.0).
-///
 /// Owns the Usage and ApiRetrievedAt slice of the cached state and leaves the
 /// history slice exactly as it found it.
 /// </summary>
