@@ -51,7 +51,17 @@
     <PackageReference Include="Dapper" Version="2.1.66" />
     <PackageReference Include="Dapper.AOT" Version="1.0.52" />
     <PackageReference Include="Microsoft.Data.Sqlite" Version="10.0.11" />
+    <!-- NativeAOT does not bundle this runtime-loaded P/Invoke dependency. -->
+    <PackageReference Include="SQLitePCLRaw.lib.e_sqlite3" Version="2.1.12"
+                      GeneratePathProperty="true" PrivateAssets="all" />
   </ItemGroup>
+
+  <Target Name="CopySqliteNativeLibrary" AfterTargets="Publish"
+          Condition="'$(RuntimeIdentifier)' == 'linux-x64'">
+    <Copy
+      SourceFiles="$(PkgSQLitePCLRaw_lib_e_sqlite3)/runtimes/$(RuntimeIdentifier)/native/libe_sqlite3.so"
+      DestinationFolder="$(PublishDir)" />
+  </Target>
 
   <ItemGroup>
     <InternalsVisibleTo Include="OpencodeGoWaybar.UnitTests" />

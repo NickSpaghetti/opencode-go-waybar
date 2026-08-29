@@ -28,6 +28,7 @@ INTEGRATION_PROJECT ?= tests/OpencodeGoWaybar.IntegrationTests/OpencodeGoWaybar.
 UI_PROJECT ?= src/OpencodeGoWaybar.Ui/OpencodeGoWaybar.Ui.csproj
 UI_TEST_PROJECT ?= tests/OpencodeGoWaybar.Ui.UnitTests/OpencodeGoWaybar.Ui.UnitTests.csproj
 ACCEPTANCE_PROJECT ?= tests/OpencodeGoWaybar.AcceptanceTests/OpencodeGoWaybar.AcceptanceTests.csproj
+WAYBAR_APP_DIR ?= $(HOME)/.local/lib/opencode-go-waybar
 E2E_TARGET_1 := e2e-l1-synthetic
 E2E_TARGET_2 := e2e-l2-neovim
 E2E_TARGET_3 := e2e-l3-vscode
@@ -229,7 +230,11 @@ clean-all: clean
 .PHONY: install
 install: ## Install the compiled binaries to ~/.local/bin and ~/.local/share
 install: publish ui-publish
-	install -Dm755 out/$(RUNTIME)/opencode-go-waybar $(HOME)/.local/bin/opencode-go-waybar
+	install -Dm755 out/$(RUNTIME)/opencode-go-waybar $(WAYBAR_APP_DIR)/opencode-go-waybar
+	install -Dm755 out/$(RUNTIME)/libe_sqlite3.so $(WAYBAR_APP_DIR)/libe_sqlite3.so
+	install -d $(HOME)/.local/bin
+	ln -sfn $(WAYBAR_APP_DIR)/opencode-go-waybar $(HOME)/.local/bin/opencode-go-waybar
+	rm -f $(HOME)/.local/bin/libe_sqlite3.so
 	mkdir -p $(HOME)/.local/share/opencode-go-waybar-ui
 	cp -r out/ui/$(RUNTIME)/. $(HOME)/.local/share/opencode-go-waybar-ui/
 	ln -sf $(HOME)/.local/share/opencode-go-waybar-ui/opencode-go-waybar-ui $(HOME)/.local/bin/opencode-go-waybar-ui
@@ -239,6 +244,8 @@ install: publish ui-publish
 uninstall: ## Remove the installed application from your system
 uninstall:
 	rm -f $(HOME)/.local/bin/opencode-go-waybar
+	rm -f $(HOME)/.local/bin/libe_sqlite3.so
+	rm -rf $(WAYBAR_APP_DIR)
 	rm -f $(HOME)/.local/bin/opencode-go-waybar-ui
 	rm -rf $(HOME)/.local/share/opencode-go-waybar-ui
 	@echo "Uninstalled successfully."
