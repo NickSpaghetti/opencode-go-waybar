@@ -4,7 +4,7 @@
         x:Class="OpencodeGoWaybar.Ui.Views.MeterPopup"
         x:DataType="vm:UsageWindowViewModel"
         Title="OpenCode Go Usage"
-        Width="420" SizeToContent="Height"
+        Width="420" Height="500"
         CanResize="False"
         Background="{DynamicResource WindowBg}"
         FontFamily="Inter, Lato, sans-serif">

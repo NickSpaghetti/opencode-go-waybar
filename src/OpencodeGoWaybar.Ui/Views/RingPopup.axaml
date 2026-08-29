@@ -5,7 +5,7 @@
         x:Class="OpencodeGoWaybar.Ui.Views.RingPopup"
         x:DataType="vm:UsageWindowViewModel"
         Title="OpenCode Go Usage"
-        Width="400" SizeToContent="Height"
+        Width="400" Height="360"
         CanResize="False"
         ShowInTaskbar="False"
         WindowDecorations="None"
