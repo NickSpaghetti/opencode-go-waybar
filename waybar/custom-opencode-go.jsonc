@@ -1,10 +1,48 @@
 // Add "custom/opencode-go" to a Waybar module list.
+//
+// The module hides itself while the OpenCode session is on a Hyprland workspace
+// other than the one you are on.
+//
+// --watch keeps the module resident and repaints the instant Hyprland reports a
+// workspace or window change, which is what you want once visibility follows the
+// focused workspace: an interval fast enough to feel immediate would spend
+// almost all of its work discovering that nothing had changed.
+//
+// Note what is absent. There is no "interval" — the process emits a line
+// whenever the answer changes, and "restart-interval" only says how long to wait
+// before restarting it if it exits. There is no "exec-if" either: Waybar
+// evaluates that once per exec, which in this mode means once at startup, so it
+// would pin the module to whatever was true then. The module reports its own
+// visibility instead.
+//
+// It reacts to every compositor event by re-reading the workspace layout and
+// comparing it, rather than matching event names — Hyprland offers no way to
+// enumerate those, so a hard-coded list would quietly stop working the day one
+// is renamed. Events that moved nothing cost a cheap query and stop there.
+//
+// A slow internal tick still runs, for the two things the compositor cannot
+// report: OpenCode exiting inside a terminal that stays open, and a cached usage
+// answer going stale.
+//
+// Set OPENCODE_GO_ACTIVE_WORKSPACE_ONLY=false to turn the workspace filter off.
 "custom/opencode-go": {
-    "exec": "opencode-go-waybar",
-    "exec-if": "pgrep -x opencode >/dev/null",
+    "exec": "opencode-go-waybar --watch",
     "return-type": "json",
-    "interval": 5,
+    "restart-interval": 5,
     "tooltip": true,
     "format": "{}",
     "on-click": "opencode-go-waybar-ui"
 }
+
+// The polling form still works, for a bar that would rather not keep a process
+// resident. Workspace switches then take up to "interval" seconds to show.
+//
+// "custom/opencode-go": {
+//     "exec": "opencode-go-waybar",
+//     "exec-if": "pgrep -x opencode >/dev/null",
+//     "return-type": "json",
+//     "interval": 5,
+//     "tooltip": true,
+//     "format": "{}",
+//     "on-click": "opencode-go-waybar-ui"
+// }

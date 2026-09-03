@@ -1,6 +1,8 @@
 using NSubstitute;
 using OpencodeGoWaybar.Models.Configurations;
 using OpencodeGoWaybar.Models.Usages;
+using OpencodeGoWaybar.Models.Hyprland;
+using OpencodeGoWaybar.Services.Foundations.Hyprland;
 using OpencodeGoWaybar.Services.Foundations.Processes;
 using OpencodeGoWaybar.Services.Foundations.Usage;
 using OpencodeGoWaybar.Services.Foundations.UsageWindowCache;
@@ -19,7 +21,7 @@ namespace OpencodeGoWaybar.UnitTests.Services.Orchestrations.UsageWindows;
 /// the only writer of its own cache file, so "do not clobber the other half" is
 /// structural rather than something a test has to hold in place.
 /// </summary>
-public sealed class UsageWindowsOrchestrationServiceTests
+public sealed partial class UsageWindowsOrchestrationServiceTests
 {
     private static readonly DateTimeOffset Now = new(2026, 8, 20, 15, 17, 0, TimeSpan.Zero);
 
@@ -179,13 +181,21 @@ public sealed class UsageWindowsOrchestrationServiceTests
         Assert.True(snapshot.IsRateLimited);
     }
 
+    /// <summary>
+    /// Defaults to a session on no compositor, which is the state in which the
+    /// workspace filter stands aside. These tests are about the usage flow, so
+    /// they should not have to say anything about where a window sits; the
+    /// filter's own cases live in the Workspaces partial.
+    /// </summary>
     private static UsageWindowsOrchestrationService CreateService(
         IProcessService processService,
         IUsageWindowCacheService cacheService,
         IUsageService usageService,
         int cautionPercent = 75,
-        int dangerPercent = 90) =>
+        int dangerPercent = 90,
+        IHyprlandService? hyprlandService = null) =>
         new(processService,
+            hyprlandService ?? CreateHyprlandService(activeWorkspaceId: null, windows: []),
             cacheService,
             usageService,
             new OpenCodeGoOptions
@@ -193,6 +203,19 @@ public sealed class UsageWindowsOrchestrationServiceTests
                 CautionPercent = cautionPercent,
                 DangerPercent = dangerPercent,
             });
+
+    private static IHyprlandService CreateHyprlandService(int? activeWorkspaceId, HyprlandWindow[] windows)
+    {
+        var hyprlandService = Substitute.For<IHyprlandService>();
+
+        hyprlandService.RetrieveActiveWorkspaceIdAsync(Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult(activeWorkspaceId));
+
+        hyprlandService.RetrieveWindowsAsync(Arg.Any<CancellationToken>())
+            .Returns(ValueTask.FromResult<IReadOnlyList<HyprlandWindow>>(windows));
+
+        return hyprlandService;
+    }
 
     private static IProcessService CreateProcessService(bool isRunning = true)
     {

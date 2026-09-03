@@ -5,11 +5,17 @@ namespace OpencodeGoWaybar.Services.Foundations.Processes;
 
 internal sealed partial class ProcessService
 {
-    private async ValueTask<bool> TryCatchAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// One mapping for every read. They differ only in their return type, and
+    /// duplicating the ladder per method would mean two places to keep in step.
+    /// </summary>
+    private async ValueTask<T> TryCatchAsync<T>(
+        Func<CancellationToken, ValueTask<T>> returningFunction,
+        CancellationToken cancellationToken)
     {
         try
         {
-            return await RetrieveIsOpenCodeRunningAsync(cancellationToken);
+            return await returningFunction(cancellationToken);
         }
         catch (OperationCanceledException)
         {
