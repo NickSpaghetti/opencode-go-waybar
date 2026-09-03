@@ -5,6 +5,7 @@ using OpencodeGoWaybar.Brokers.Caches;
 using OpencodeGoWaybar.Brokers.Configurations;
 using OpencodeGoWaybar.Brokers.Credentials;
 using OpencodeGoWaybar.Brokers.DateTimes;
+using OpencodeGoWaybar.Brokers.Hyprland;
 using OpencodeGoWaybar.Brokers.Loggings;
 using OpencodeGoWaybar.Brokers.Processes;
 using OpencodeGoWaybar.Brokers.Storages;
@@ -18,6 +19,7 @@ using OpencodeGoWaybar.Services.Aggregations.Usage;
 using OpencodeGoWaybar.Services.Foundations.UsageHistoryCache;
 using OpencodeGoWaybar.Services.Foundations.UsageWindowCache;
 using OpencodeGoWaybar.Services.Foundations.Configurations;
+using OpencodeGoWaybar.Services.Foundations.Hyprland;
 using OpencodeGoWaybar.Services.Foundations.OpenCodeAuth;
 using OpencodeGoWaybar.Services.Foundations.OpenCodeDatabase;
 using OpencodeGoWaybar.Services.Foundations.Processes;
@@ -90,8 +92,11 @@ public static class UsageComposition
             .AddTransient<IUsageHistoryOrchestrationService, UsageHistoryOrchestrationService>()
             .AddTransient<IProcessBroker, ProcessBroker>()
             .AddTransient<IProcessService, ProcessService>()
+            .AddTransient<IHyprlandBroker, HyprlandBroker>()
+            .AddTransient<IHyprlandService, HyprlandService>()
             .AddTransient<IUsageAggregationService, UsageAggregationService>()
             .AddTransient<IWaybarExposer, WaybarExposer>()
+            .AddTransient<IWaybarStreamExposer, WaybarStreamExposer>()
             .AddTransient<IUsageExposer, UsageExposer>()
             // The theme broker owns filesystem watchers and is disposable, so it is
             // held once and torn down with the provider; the exposer is a singleton

@@ -34,6 +34,7 @@ internal sealed class OpenCodeGoOptions
     public const string EnvironmentVariablePrefix = "OPENCODE_GO_";
     public const string ApiKeyEnvironmentVariable = "OPENCODE_GO_API_KEY";
     public const string ProcessPresentEnvironmentVariable = "OPENCODE_GO_PROCESS_PRESENT";
+    public const string ActiveWorkspaceOnlyEnvironmentVariable = "OPENCODE_GO_ACTIVE_WORKSPACE_ONLY";
 
     public int RefreshIntervalSeconds
     {
@@ -92,6 +93,18 @@ internal sealed class OpenCodeGoOptions
     /// module works out of the box once `/connect` has been run in opencode.
     /// </summary>
     public ApiKeySource ApiKeySource { get; set; } = ApiKeySource.Auto;
+
+    /// <summary>
+    /// Whether the module hides itself while the OpenCode session sits on a
+    /// workspace other than the focused one. On by default: a bar reporting a
+    /// session you cannot see is reporting on somebody else's screen.
+    ///
+    /// The filter only ever hides a session it can positively place on another
+    /// workspace. A machine not running Hyprland, a compositor that will not
+    /// answer, or a session owned by no window at all all leave the module
+    /// visible, so turning this on cannot cost you a reading you used to get.
+    /// </summary>
+    public bool ActiveWorkspaceOnly { get; set; } = true;
 
     /// <summary>
     /// Forces the process-detection result instead of reading the operating system

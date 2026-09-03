@@ -31,6 +31,7 @@ internal sealed partial class ConfigurationService : IConfigurationService
             var options = new OpenCodeGoOptions();
             configuration.Bind(options);
             BindProcessPresentOverride(configuration, options);
+            BindActiveWorkspaceOnly(configuration, options);
             ExpandHomeRelativePaths(options);
             ValidateOptions(options);
             return options;
@@ -52,6 +53,21 @@ internal sealed partial class ConfigurationService : IConfigurationService
         if (bool.TryParse(configuration[OpenCodeGoOptions.ProcessPresentEnvironmentVariable], out var processIsPresent))
         {
             options.ProcessPresentOverride = processIsPresent;
+        }
+    }
+
+    /// <summary>
+    /// Reads the workspace filter by its full environment variable name, for the
+    /// same reason the override above needs one: the prefixed provider strips
+    /// <c>OPENCODE_GO_</c> down to <c>ACTIVE_WORKSPACE_ONLY</c>, which the binder
+    /// will not match to <see cref="OpenCodeGoOptions.ActiveWorkspaceOnly"/>. A
+    /// value bound from a JSON file survives when the variable is unset.
+    /// </summary>
+    private static void BindActiveWorkspaceOnly(IConfiguration configuration, OpenCodeGoOptions options)
+    {
+        if (bool.TryParse(configuration[OpenCodeGoOptions.ActiveWorkspaceOnlyEnvironmentVariable], out var activeWorkspaceOnly))
+        {
+            options.ActiveWorkspaceOnly = activeWorkspaceOnly;
         }
     }
 

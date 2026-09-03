@@ -72,15 +72,33 @@ Rebuild after running the container gate.
 Run `make install` to install the module then modify your Waybar config to use it.
 ```json
     "custom/opencode-go": {
-        "exec": "opencode-go-waybar",
-        "exec-if": "pgrep -x opencode >/dev/null",
+        "exec": "opencode-go-waybar --watch",
         "return-type": "json",
-        "interval": 5,
+        "restart-interval": 5,
         "tooltip": true,
         "format": "{}",
         "on-click": "opencode-go-waybar-ui --dashboard",
         "on-click-right": "opencode-go-waybar-ui --rings",
         "on-click-middle": "opencode-go-waybar-ui --meter"
+    }
+```
+
+`--watch` keeps the module resident and repaints the moment Hyprland reports a change, so the bar
+follows your focused workspace without a visible delay. It takes no `interval`, and no `exec-if` —
+Waybar evaluates that once per exec, which here means once at startup, so it would pin the module
+to whatever happened to be true then. The module reports its own visibility instead.
+
+The polling form still works if you would rather not keep a process resident. Workspace switches
+then take up to `interval` seconds to show:
+
+```json
+    "custom/opencode-go": {
+        "exec": "opencode-go-waybar",
+        "exec-if": "pgrep -x opencode >/dev/null",
+        "return-type": "json",
+        "interval": 5,
+        "tooltip": true,
+        "format": "{}"
     }
 ```
 
@@ -118,10 +136,58 @@ Settings load from `~/.config/opencode-go-waybar/config.json`, then environment 
 | `AuthPath` | `~/.local/share/opencode/auth.json` | opencode's credential store. |
 | `UsageEndpoint` | the OpenCode Go usage API | Must be an absolute https URI. |
 | `ApiKeySource` | `Auto` | `Auto`, `Environment`, or `AuthFile`. |
+| `ActiveWorkspaceOnly` | `true` | Hides the module while the session sits on a Hyprland workspace you are not looking at. |
 | `ProcessPresentOverride` | unset | Forces process detection. For containers and tests. |
 
 A bad value fails at startup rather than being ignored. Set `CautionPercent` above `DangerPercent`
 and the module exits non-zero with `CautionPercent must be below DangerPercent.` on stderr.
+
+### Workspace filtering
+
+By default the module only appears while an OpenCode session is displayed on the Hyprland workspace
+you are currently on. OpenCode owns no window of its own — it is a terminal program, or a child of
+the editor driving it over ACP — so the module walks from each `opencode` process up through its
+parents until it reaches one that Hyprland has placed on a workspace. That window is where the
+session is on screen.
+
+The filter is deliberately one-sided: it hides only a session it can positively place somewhere
+else. It stays visible on any machine not running Hyprland, whenever the compositor will not answer,
+and for a session no window owns at all, so turning it on cannot cost you a rate-limit warning you
+would otherwise have seen.
+
+Turn it off with `ActiveWorkspaceOnly` in the config file, or:
+
+```
+OPENCODE_GO_ACTIVE_WORKSPACE_ONLY=false
+```
+
+Two caveats. A terminal that draws every window from a single process — Ghostty in its default
+single-instance mode, for one — reports the same pid for all of them, so Hyprland cannot say which
+of its windows holds the session; the module shows itself if any of that terminal's windows is on
+your active workspace, rather than guessing that the session is the hidden one.
+
+And the compositor cannot report everything. OpenCode exiting inside a terminal that stays open
+raises no Hyprland event, so that case waits on the module's own five-second tick rather than
+clearing instantly. Opening or closing the window itself is an event, and is immediate.
+
+### How the watch loop decides to repaint
+
+Hyprland publishes no way to enumerate its event names, and they are not stable between versions,
+so the module does not try to recognise them. It reacts to *every* event by re-reading the focused
+workspace and the window layout and comparing that against the last reading. Only a reading that
+actually moved reaches the expensive work — the cache file, opencode's database, and the API.
+
+The point of doing it this way is the failure mode. A hard-coded list of interesting events fails
+closed: the day Hyprland renames one, the module stops noticing that case and nothing anywhere
+reports a problem. Comparing state cannot fail that way, because nothing is deciding in advance
+which events are allowed to matter. The cost is that a burst of noise — a terminal animating a
+spinner in its title emits several events a second — spends one cheap compositor query per debounce
+window instead of a string comparison.
+
+Alongside that, a five-second tick renders unconditionally. It carries the usage refresh and the
+process check, so it travels on its own latch rather than sharing the event nudge: under a constant
+stream of events the shared slot is nearly always full, and the one wake-up that must never be
+dropped is that one.
 
 ## Layout
 
