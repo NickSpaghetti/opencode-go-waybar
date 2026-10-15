@@ -87,6 +87,56 @@ public class ConfigurationLoadingTests
     }
 
     [Fact]
+    public void ShouldUseOpenCodeDatabaseEnvironmentVariableWhenModulePathIsNotConfigured()
+    {
+        // given
+        var path = WriteTempConfig("{}");
+        using var scope = new EnvironmentVariableScope(
+            ("OPENCODE_DB", "/var/lib/opencode/custom.db"));
+
+        // when
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
+
+        // then
+        Assert.Equal("/var/lib/opencode/custom.db", options.DatabasePath);
+    }
+
+    [Fact]
+    public void ShouldPreferModuleDatabasePathEnvironmentVariableOverOpenCodeDatabaseEnvironmentVariable()
+    {
+        // given
+        var path = WriteTempConfig("{}");
+        using var scope = new EnvironmentVariableScope(
+            ("OPENCODE_DB", "/var/lib/opencode/custom.db"),
+            ("OPENCODE_GO_DatabasePath", "/var/lib/opencode-go-waybar/custom.db"));
+
+        // when
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
+
+        // then
+        Assert.Equal("/var/lib/opencode-go-waybar/custom.db", options.DatabasePath);
+    }
+
+    [Fact]
+    public void ShouldPreferModuleDatabasePathFromJsonOverOpenCodeDatabaseEnvironmentVariable()
+    {
+        // given
+        var path = WriteTempConfig("""
+            {
+              "DatabasePath": "/var/lib/opencode-go-waybar/configured.db"
+            }
+            """);
+        using var scope = new EnvironmentVariableScope(
+            ("OPENCODE_DB", "/var/lib/opencode/custom.db"));
+
+        // when
+        OpenCodeGoOptions options = CreateFoundation().RetrieveOptions(configPath: path);
+
+        // then
+        Assert.Equal("/var/lib/opencode-go-waybar/configured.db", options.DatabasePath);
+    }
+
+    [Fact]
     public void ShouldDeclareUserSecretsIdOnTheAssembly()
     {
         // given

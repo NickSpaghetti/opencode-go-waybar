@@ -139,6 +139,10 @@ Settings load from `~/.config/opencode-go-waybar/config.json`, then environment 
 | `ActiveWorkspaceOnly` | `true` | Hides the module while the session sits on a Hyprland workspace you are not looking at. |
 | `ProcessPresentOverride` | unset | Forces process detection. For containers and tests. |
 
+When `DatabasePath` is not set in this module's config, it follows OpenCode's
+`OPENCODE_DB` environment variable. An explicit `DatabasePath` or
+`OPENCODE_GO_DatabasePath` takes precedence.
+
 A bad value fails at startup rather than being ignored. Set `CautionPercent` above `DangerPercent`
 and the module exits non-zero with `CautionPercent must be below DangerPercent.` on stderr.
 

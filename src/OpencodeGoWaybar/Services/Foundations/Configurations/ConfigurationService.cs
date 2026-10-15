@@ -30,6 +30,7 @@ internal sealed partial class ConfigurationService : IConfigurationService
         {
             var options = new OpenCodeGoOptions();
             configuration.Bind(options);
+            BindOpenCodeDatabasePath(configuration, options);
             BindProcessPresentOverride(configuration, options);
             BindActiveWorkspaceOnly(configuration, options);
             ExpandHomeRelativePaths(options);
@@ -39,6 +40,27 @@ internal sealed partial class ConfigurationService : IConfigurationService
         finally
         {
             (configuration as IDisposable)?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Uses OpenCode's database path only when this module has no explicit path.
+    /// </summary>
+    private static void BindOpenCodeDatabasePath(
+        IConfiguration configuration,
+        OpenCodeGoOptions options)
+    {
+        if (configuration[nameof(OpenCodeGoOptions.DatabasePath)] is not null)
+        {
+            return;
+        }
+
+        var openCodeDatabasePath =
+            configuration[OpenCodeGoOptions.OpenCodeDatabasePathEnvironmentVariable];
+
+        if (!string.IsNullOrWhiteSpace(openCodeDatabasePath))
+        {
+            options.DatabasePath = openCodeDatabasePath;
         }
     }
 

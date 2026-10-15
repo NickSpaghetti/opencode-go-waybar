@@ -14,6 +14,7 @@ internal sealed class OpenCodeGoOptions
     public const int MinPromptDebounceSeconds = 0;
     public const int MinPercentThreshold = 1;
     public const int MaxPercentThreshold = 100;
+    public const string OpenCodeDatabasePathEnvironmentVariable = "OPENCODE_DB";
     public const string DefaultAuthPath = "~/.local/share/opencode/auth.json";
     public const string DefaultDatabasePath = "~/.local/share/opencode/opencode.db";
     public const string DefaultCacheDirectory = "~/.cache/opencode-go-waybar";
